@@ -1,4 +1,4 @@
-	```csharp
+	```
 	public static void EnsureBrowserEmulationEnabled(bool uninstall = false)
         {
 
