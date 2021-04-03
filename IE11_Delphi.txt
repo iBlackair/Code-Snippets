@@ -1,0 +1,26 @@
+function RegeditIE11(const aInstall: Boolean = False): Boolean;
+const
+KEY_PATH = 'SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION';
+var
+reg: TRegistry;
+progName: string;
+begin
+progName := ExtractFileName(ParamStr(0));
+Result := False;
+reg := TRegistry.Create;
+try
+reg.RootKey := HKEY_CURRENT_USER;
+if reg.OpenKey(KEY_PATH, False) then
+begin
+if aInstall then
+begin
+reg.WriteInteger(progName, 11001);
+Result := reg.ValueExists(progName);
+end
+else
+Result := reg.DeleteValue(progName) or (not reg.ValueExists(progName));
+end;
+finally
+reg.Free;
+end;
+end;

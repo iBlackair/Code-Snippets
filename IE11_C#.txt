@@ -1,0 +1,24 @@
+		public static void EnsureBrowserEmulationEnabled(bool uninstall = false)
+        {
+
+            try
+            {
+                using (
+                    var rk = Registry.CurrentUser.OpenSubKey(
+                            @"SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION", true)
+                )
+                {
+                    if (!uninstall)
+                    {
+                        dynamic value = rk.GetValue(Path.GetFileName(Application.ExecutablePath));
+                        if (value == null)
+                            rk.SetValue(Path.GetFileName(Application.ExecutablePath), (uint)11001, RegistryValueKind.DWord);
+                    }
+                    else
+                        rk.DeleteValue(Path.GetFileName(Application.ExecutablePath));
+                }
+            }
+            catch
+            {
+            }
+        }
