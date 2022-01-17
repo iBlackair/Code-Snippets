@@ -1,0 +1,107 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using NewWidget.Core;
+using NewWidget.Core.Native;
+using NewWidget.Core.Scripting;
+using System.Windows.Forms;
+
+public class Script : ScriptBase {
+
+	Keys Key = Keys.F12;
+	bool FirstEnter, FirstChange, SecondChange = false;
+	
+	int DeluNpcId = 32660;
+	int DelusionManager = 32664;
+	int RaidID = 25692;
+	public override void OnStart() {
+		base.OnStart();
+		//BindKey(Key, () => !Me.IsDisabled && Client.IsLoggedIn, Delusion);
+		CreateTimer(1000,Delusion);
+		CreateTimer(250, HealPet);
+	}
+	
+	void HealPet() {
+		if(Me.Pet.CurentHP <10000)
+			Client.UseSkill(1127);
+	}
+	
+	void Delusion(){
+		if(!FirstEnter && NpcExists(DeluNpcId, false)) {
+			Client.SetTarget(DeluNpcId);
+			if(Me.Target.Id == DeluNpcId) {
+				NpcDialogOpen(DeluNpcId);
+				Client.DialogSelect(0);
+				FirstEnter = true;
+			}
+		}
+		else if(FirstEnter && !FirstChange) {
+			if (NpcExists(DelusionManager, false) && !NpcExists(RaidID, true)){
+				NpcDialogOpen(32664);
+				Client.DialogSelect(0);
+				FirstChange = true;
+			}
+		}
+		//Aenkinel 25692
+		else if(FirstChange) {
+				Wait(2000);
+			if (NpcExists(DelusionManager, false) && NpcExists(RaidID, true)){
+				Client.SetTarget(25692);
+			    Client.Pve.Enabled = true;
+			    
+				while (Me.Target.HP >1){ Wait(100);}
+				Client.Pve.Enabled = false;
+				
+				NpcDialogOpen(DelusionManager);
+				Client.DialogSelect(1);
+				
+				FirstChange = false;
+				FirstEnter = false;
+			}
+			else if (NpcExists(DelusionManager, false) && !NpcExists(RaidID, true)){
+				NpcDialogOpen(DelusionManager);
+				Client.DialogSelect(1);
+				FirstChange = false;
+				FirstEnter = false;
+			}
+		}
+	
+}
+
+bool NpcExists(int ID, bool IsMob) {
+
+	switch(IsMob) {
+		case false:
+		var NpcTarget = Npcs.FirstOrDefault(n => n.Id == ID);
+		
+			if(NpcTarget != null) {
+				return true;
+		}
+		else { return false;}
+		break;
+		case true:
+		var MobTarget = Mobs.FirstOrDefault(n => n.Id == ID);
+		
+			if(MobTarget != null) {
+				return true;
+		}
+		else { return false;}
+		break;			
+		
+	}
+	return false;
+}
+void NpcDialogOpen(int ID) {
+	var NpcTarget = Npcs.FirstOrDefault(n => n.Id == ID);
+	
+	if(NpcTarget != null) {
+		Client.SetTarget(NpcTarget);
+		if(Me.Target == NpcTarget) {
+			Client.DialogOpen();
+			Wait(200);
+		}
+		
+	}
+}
+
+}

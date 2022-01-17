@@ -1,0 +1,54 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using NewWidget.Core;
+using NewWidget.Core.Native;
+using NewWidget.Core.Scripting;
+
+public class Script : ScriptBase {
+
+    int SeedId = 788; // ид семечки
+    int SeedMaxId = 5564; // ид семечки 3 ур
+    int IconId = 789; // ид иконы
+    string Target = "Blackair"; // персонаж по которому проверять дистанцию для юза
+    string SecondCharger = ""; // персонаж об которого заряжаться, оставить пустым если об пета
+
+    public override void OnStart() {
+        base.OnStart();
+        CreateTimer(500, OnTimer);
+    }
+
+    void OnTimer() {
+        var second = SecondCharger == string.Empty ? Me.Pet as L2Live : Client.PartyMembers.FindByName(SecondCharger);
+        if (second == null || Me.IsDisabled || Me.SkillCooltime(IconId) > 5 * 1000)
+            return;
+        
+        var seed = Me.Buffs.FirstOrDefault(b => b.Id == SeedId || b.Id == SeedMaxId);
+        var secondClient = (second is L2Player) ? ((L2Player)second).GetClient() : null;
+        
+        if (seed == null) {
+            if (Me.SkillCooltime(SeedId) > 0)
+                return;
+            Client.UseSkill(SeedId);
+        }
+        else if (seed.Level < 3) {
+            Client.SetTarget(second);
+            Client.Attack();
+            if (secondClient != null) {
+                secondClient.SetTarget(Me);
+                secondClient.Attack();
+            }
+        }
+        else {
+            if (Me.LastAttackTime < 500)
+                Client.FMoveToLocation(Me.Location);
+            if (secondClient != null && secondClient.Me.LastAttackTime < 500)
+                secondClient.FMoveToLocation(secondClient.Me.Location);
+            var tgt = PartyMembers.FirstOrDefault(p => p.Name == Target);
+            if (tgt != null && tgt.DistanceToUser < 900) {
+                Client.UseSkill(IconId);
+                Enabled = false;
+            }
+        }
+    }
+}
